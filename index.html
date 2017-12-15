@@ -5,48 +5,32 @@
     <title>Sharpen The Saw</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.4.3/css/bulma.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway" rel="stylesheet">
     <style>
         html {
             font-size: 1em;
         }
-
-        body {
-            background-color: white;
-            font-family: 'Raleway', sans-serif;
-            font-weight: 400;
-            line-height: 1.45;
-            color: #333;
-        }
-
         p {
             margin-bottom: 1.3em;
         }
-
         h1, h2, h3, h4 {
             margin: 1.414em 0 0.5em;
             font-family: 'Open Sans', sans-serif;
             font-weight: inherit;
             line-height: 1.2;
         }
-
         h1 {
             margin-top: 0;
             font-size: 6.854em;
         }
-
         h2 {
             font-size: 4.236em;
         }
-
         h3 {
             font-size: 2.618em;
         }
-
         h4 {
             font-size: 1.618em;
         }
-
         small, .font_small {
             font-size: 0.618em;
         }
@@ -55,10 +39,33 @@
 <body>
 <section class="hero">
     <div class="hero-body">
-        <div class="container">
+        <div class="container" id="app">
             <h1 class="title">
-                Sharpen the Saw
+                Sharpen the Saw Calculator
             </h1>
+			<h4>
+				Enter values below
+			  </h4>
+			  <div class="column  is-one-quarter">
+					<div class="field">
+						<label class="label">Invested Hours</label>
+						<div class="control">
+							<input class="input" v-model="hoursSpent" type="text" placeholder="Invested Hours" value="20">
+						</div>
+					</div>
+					<div class="field">
+						<label class="label">Estimated Improvement (Percent)</label>
+						<div class="control has-icons-right">
+							<input class="input" v-model="percentageGain" type="text" placeholder="Estimated Improvement (%)" value="10">
+							<span class="icon is-right">
+								<i class="fa fa-percent"></i>
+							</span>
+						</div>
+					</div>
+					
+					<p><strong>Days to Intersection:</strong> {{ daysToIntersection }}</p>
+				</div>
+				<line-chart :hours-spent="hoursSpent" :percentage-gain="percentageGain" :days-to-intersection="daysToIntersection" :multiple-gain="multipleGain"></line-chart>
         </div>
     </div>
 </section>
@@ -66,7 +73,7 @@
     <div class="container">
         <div class="content has-text-centered">
             <p>
-                <strong>Sharpen The Saw</strong> by Kerry Jones. Name taken from <em>7 Habits of Highly Effective People</em> by Stephen Covey.
+                <strong>Sharpen The Saw Calculator</strong> by Kerry Jones. Name taken from <em>7 Habits of Highly Effective People</em> by Stephen Covey.
             </p>
             <p>
                 <a target="_blank" class="icon" href="https://github.com/kerryjones">
@@ -82,5 +89,117 @@
         </div>
     </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="https://unpkg.com/vue-chartjs@2.8.7/dist/vue-chartjs.full.min.js"></script>
+  
+  <script>
+  Vue.component('line-chart', {
+	  extends: VueChartJs.Line,
+	  props: ['hoursSpent', 'percentageGain', 'daysToIntersection', 'multipleGain'],
+	  methods: {
+		calculateColumns: function() {
+			var xColumns = [0];
+			var normal = ['normal production'];
+			var enhanced = ['enhanced production'];
+
+			for (x = 1; x <= this.daysToIntersection * 2; x += this.daysToIntersection / 20) {
+				xColumns.push(Math.round(x * 10) / 10);
+
+				// y = x (hours)
+				// y = x * 8 (days)
+				normal.push(x.toFixed(2) * 8);
+
+				// y = m(x - c) (hours)
+				// y = m(x - c) * 8 (days)
+				enhanced.push((this.multipleGain * (x * 8 - this.hoursSpent)).toFixed(1));
+			}
+			
+			return {
+				x: xColumns,
+				y: normal,
+				y2: enhanced
+			};
+		},
+		
+		updateChart: function() {
+			if(!this.hoursSpent || !this.percentageGain)
+				return;
+				
+			var columns = this.calculateColumns();
+			
+			this._chart.data = {
+			  labels: columns.x,
+			  datasets: [
+				{
+				  label: 'Normal',
+				  backgroundColor: '#f87979',
+				  data: columns.y,
+				  fill: false
+				},
+				{
+				  label: 'Enhanced',
+				  backgroundColor: '#4056F4',
+				  data: columns.y2,
+				  fill: false
+				}
+			  ]
+			};
+			this._chart.update();
+			console.log(this._chart.data);
+			
+			// Do stuff
+		},
+		
+	},
+	watch: {
+		daysToIntersection: function(value) {
+			this.updateChart();
+		}
+	},
+	mounted () {
+		var columns = this.calculateColumns();
+		
+		this.renderChart({
+		  labels: columns.x,
+		  datasets: [
+			{
+			  label: 'Normal',
+			  backgroundColor: '#f87979',
+			  data: columns.y,
+			  fill: false
+			},
+			{
+			  label: 'Enhanced',
+			  backgroundColor: '#4056F4',
+			  data: columns.y2,
+			  fill: false
+			}
+		  ]
+		}, {responsive: true, maintainAspectRatio: false})
+	  }
+	  
+	});
+	
+  var app = new Vue({
+		el: '#app',
+		data: {
+			message: 'Hello Vue!',
+			hoursSpent: 20,
+			percentageGain: 10
+		},
+		computed: {
+			daysToIntersection: function() {
+				// Intersect: x = (mc)/(m-1) where m = multiple gain and c = hours spent
+				// Slope: y = m(x-c)
+				var intersectHours = Math.round((this.multipleGain * this.hoursSpent) / (this.multipleGain - 1));
+				
+				return (intersectHours / 8).toFixed(1);
+			},
+			multipleGain: function() {
+				return this.percentageGain/100 + 1;
+			}
+		},
+	});
+</script>
 </body>
 </html>
