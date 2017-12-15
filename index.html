@@ -56,7 +56,7 @@
 					<div class="field">
 						<label class="label">Estimated Improvement (Percent)</label>
 						<div class="control has-icons-right">
-							<input class="input" v-model="percentageGain" type="text" placeholder="Estimated Improvement (%)" value="10">
+							<input class="input" v-model="percentageGain" type="text" placeholder="Estimated Improvement (%)" value="50">
 							<span class="icon is-right">
 								<i class="fa fa-percent"></i>
 							</span>
@@ -101,8 +101,9 @@
 			var xColumns = [0];
 			var normal = ['normal production'];
 			var enhanced = ['enhanced production'];
+			var increment = Math.ceil(this.daysToIntersection / 20);
 
-			for (x = 1; x <= this.daysToIntersection * 2; x += this.daysToIntersection / 20) {
+			for (x = 1; x <= this.daysToIntersection * 2; x += increment) {
 				xColumns.push(Math.round(x * 10) / 10);
 
 				// y = x (hours)
@@ -185,7 +186,7 @@
 		data: {
 			message: 'Hello Vue!',
 			hoursSpent: 20,
-			percentageGain: 10
+			percentageGain: 50
 		},
 		computed: {
 			daysToIntersection: function() {
@@ -193,7 +194,7 @@
 				// Slope: y = m(x-c)
 				var intersectHours = Math.round((this.multipleGain * this.hoursSpent) / (this.multipleGain - 1));
 				
-				return (intersectHours / 8).toFixed(1);
+				return (intersectHours / 8).toFixed(1).replace('.0', '');
 			},
 			multipleGain: function() {
 				return this.percentageGain/100 + 1;
