@@ -66,6 +66,7 @@
 					<p><strong>Days to Intersection:</strong> {{ daysToIntersection }}</p>
 				</div>
 				<line-chart :hours-spent="hoursSpent" :percentage-gain="percentageGain" :days-to-intersection="daysToIntersection" :multiple-gain="multipleGain"></line-chart>
+				<br>
         </div>
     </div>
 </section>
@@ -146,7 +147,6 @@
 			  ]
 			};
 			this._chart.update();
-			console.log(this._chart.data);
 			
 			// Do stuff
 		},
@@ -176,7 +176,26 @@
 			  fill: false
 			}
 		  ]
-		}, {responsive: true, maintainAspectRatio: false})
+		}, {
+			responsive: true, 
+			maintainAspectRatio: false,
+			scales: {
+					xAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Days'
+						}
+					}],
+					yAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Cumulative Hours of Production'
+						}
+					}]
+				}
+		})
 	  }
 	  
 	});
